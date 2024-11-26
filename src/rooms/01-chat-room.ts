@@ -1,4 +1,8 @@
 import { Room } from "colyseus";
+import * as protobuf from "protobufjs";
+
+const root = protobuf.loadSync(__dirname + "/../protobuf/person.proto");
+const Person = root.lookupType("Person");
 
 // 这段代码定义了一个名为 ChatRoom 的房间类，它是 Colyseus 框架中的一个自定义房间实现。
 // 这个房间类继承自 Colyseus 的 Room 类，并实现了房间的生命周期方法
@@ -10,15 +14,30 @@ export class ChatRoom extends Room {
     onCreate(options) {
         console.log("房间被创建!", options);
 
-        this.onMessage("message", (client, message) => {
+        this.onMessage("typeMessage", (client, message) => {
+            var decodedMessage = Person.decode(new Uint8Array(message));
             console.log(
-                "ChatRoom 接收到消息从",
+                "Received message from",
                 client.sessionId,
                 ":",
-                message
+                decodedMessage
             );
-            // 将消息内容广播给所有连接的客户端（包括发送消息的客户端）
-            this.broadcast("messages", `(${client.sessionId}) ${message}`);
+            console.log(
+                "解码后的文本:",
+                decodedMessage.age,
+                decodedMessage.name
+            );
+
+            var payload = {
+                age: decodedMessage.age,
+                name: decodedMessage.name,
+            };
+            var errMsg = Person.verify(payload);
+            if (errMsg) throw Error(errMsg);
+
+            var responseMessage = Person.create(payload);
+            var buffer = Person.encode(responseMessage).finish();
+            this.broadcast("typeMessage", buffer);
         });
     }
 

@@ -29,6 +29,7 @@
     "colyseus": "^0.15.0",
     "cors": "^2.8.5",
     "express": "^4.16.4",
+    "protobufjs": "^7.4.0",
     "serve-index": "^1.8.0",
     "superagent": "^3.8.1"
   }
